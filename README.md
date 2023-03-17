@@ -9,21 +9,10 @@ Disabling second fragment
 =========================
 For our example we need only one fragment - so disable the "Next" button.
 
-In `fragment_first.xml` remove these lines:
-```xml
-        <Button
-            android:id="@+id/button_first"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/next"
-            app:layout_constraintBottom_toTopOf="@id/textview_first"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-        />
-```
+In `fragment_first.xml` remove the section `<Button ...>`
+
 and change the whole section `<TextView ...>` to
-```
+```xml
         <ImageView
             android:id="@+id/imageView"
             android:layout_width="80dp"
@@ -37,13 +26,13 @@ Don't forget to create a string value resource for `my_image_caption`.
 
 Since the button does not exist anymore, we need to remove the corresponding code from `FirstFragment.kt`:
 ```kotlin
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    /*override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         binding.buttonFirst.setOnClickListener {
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         }
-    }
+    }*/
 ```
 
 Adding the download function
@@ -54,7 +43,7 @@ Changing the icon
 At first we exchange the "mail" icon to a download icon from material design icons db.
 
 In the "Project" browser, right-click on "App->New->Vector Asset".
-Click on "Clip art", enter "download" in the search field and select the "file download" icon and clock "Next" and "Finish".
+Click on "Clip art", enter "download" in the search field and select the "file download" icon and click "Next" and "Finish".
 
 Change the icon name as follows in `res/layout/activity_main.xml`:
 ```xml
