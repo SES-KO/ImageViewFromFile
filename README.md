@@ -180,4 +180,97 @@ And add this at the end of the `onCreate` function in `MainActivity.kt`:
         }
 ```
 
+Downloading the file
+====================
+In the beginning von `MainActivity.kt` we add two variables:
+```kotlin
+    var msg: String? = ""
+    var lastMsg = ""
+```
+
+```kotlin
+    private fun downloadFile(url: String) {
+        val dirType = Environment.DIRECTORY_PICTURES
+        val subPath = getString(R.string.app_name)
+
+        val directory = File(Environment.getExternalStoragePublicDirectory(dirType), subPath)
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+
+        val downloadManager = this.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+
+        val downloadUri = Uri.parse(url)
+        val fileName = url.substring(url.lastIndexOf("/") + 1)
+        val localFile = File(directory, fileName)
+        val subPathFile = File(subPath, fileName)
+        if (!localFile.exists()) {
+            val request = DownloadManager.Request(downloadUri).apply {
+                setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+                    .setAllowedOverRoaming(false)
+                    .setTitle(subPathFile.toString())
+                    .setDescription("")
+                    .setDestinationInExternalPublicDir(
+                        dirType,
+                        subPathFile.toString()
+                    )
+            }
+
+            val downloadId = downloadManager.enqueue(request)
+            val query = DownloadManager.Query().setFilterById(downloadId)
+            Thread(Runnable {
+                var downloading = true
+                while (downloading) {
+                    val cursor: Cursor = downloadManager.query(query)
+                    cursor.moveToFirst()
+                    if (cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
+                        downloading = false
+                    }
+                    val status =
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                    msg = statusMessage(url, directory, status)
+                    if (msg != lastMsg) {
+                        this.runOnUiThread {
+                            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+                        }
+                        lastMsg = msg ?: ""
+                    }
+                    cursor.close()
+                }
+            }).start()
+        }
+    }
+
+    private fun statusMessage(url: String, directory: File, status: Int): String? {
+        var msg = ""
+        msg = when (status) {
+            DownloadManager.STATUS_FAILED -> "Download has been failed, please try again"
+            DownloadManager.STATUS_PAUSED -> "Paused"
+            DownloadManager.STATUS_PENDING -> "Pending"
+            DownloadManager.STATUS_RUNNING -> "Downloading..."
+            DownloadManager.STATUS_SUCCESSFUL -> "Image downloaded successfully in $directory" + File.separator + url.substring(
+                url.lastIndexOf("/") + 1
+            )
+            else -> "There's nothing to download"
+        }
+        return msg
+    }
+```
+
+Change the `Toast` in `enterDownloadUrl(view: View)` to calling the download function:
+```kotlin
+    fun enterDownloadUrl(view: View) {
+        val builder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        builder.setTitle("Enter Url to image file")
+        val dialogLayout = inflater.inflate(R.layout.enter_download_url, null)
+        val downloadUrl  = dialogLayout.findViewById<EditText>(R.id.downloadUrl)
+        builder.setView(dialogLayout)
+        builder.setPositiveButton("Download") {
+                dialogInterface, i -> downloadFile(downloadUrl.text.toString())
+        }
+        builder.show()
+    }
+```
+
 This project is still WORK-IN-PROGRESS.
