@@ -111,5 +111,73 @@ Link floating action button to the new added function directly in the `activity_
 
 ```
 
+Adding the permissions to access the Internet and to write to the android file system
+=====================================================================================
+
+Add permissions to the Manifest
+-------------------------------
+Add the following lines to the `AndroidManifest.xml` after `<manifest .../>`:
+```xml
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+```
+
+Ask for permissions with older Android systems
+----------------------------------------------
+In Android 9 (API level 28) and lower, you must ask the user for permission.
+
+Create a companion object in `MainActivity.kt` to store 
+```kotlin
+    companion object {
+        private const val MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1
+    }
+```
+
+Add the function to ask for permissions:
+```kotlin
+    @TargetApi(Build.VERSION_CODES.M)
+    fun askPermissions() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Permission is not granted
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )
+            ) {
+                AlertDialog.Builder(this)
+                    .setTitle("Permission required")
+                    .setMessage("Permission required to download file.")
+                    .setPositiveButton("Accept") { dialog, id ->
+                        ActivityCompat.requestPermissions(
+                            this,
+                            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                            MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE
+                        )
+                        finish()
+                    }
+                    .setNegativeButton("Deny") { dialog, id -> dialog.cancel() }
+                    .show()
+            } else {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE
+                )
+            }
+        }
+    }
+```
+
+And add this at the end of the `onCreate` function in `MainActivity.kt`:
+```kotlin
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            askPermissions()
+        }
+```
 
 This project is still WORK-IN-PROGRESS.
