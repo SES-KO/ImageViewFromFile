@@ -1,5 +1,6 @@
 package com.sesko.imageviewfromfile
 
+import android.app.AlertDialog
 import android.os.Bundle
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
@@ -10,6 +11,9 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.EditText
+import android.widget.Toast
 import com.sesko.imageviewfromfile.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -30,11 +34,11 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-        binding.fab.setOnClickListener { view ->
+        /*binding.fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAnchorView(R.id.fab)
                 .setAction("Action", null).show()
-        }
+        }*/
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -57,5 +61,18 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration)
                 || super.onSupportNavigateUp()
+    }
+
+    fun enterDownloadUrl(view: View) {
+        val builder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        builder.setTitle("Enter Url to image file")
+        val dialogLayout = inflater.inflate(R.layout.enter_download_url, null)
+        val downloadUrl  = dialogLayout.findViewById<EditText>(R.id.downloadUrl)
+        builder.setView(dialogLayout)
+        builder.setPositiveButton("Download") {
+                dialogInterface, i -> Toast.makeText(applicationContext, "Downloading " + downloadUrl.text.toString(), Toast.LENGTH_SHORT).show()
+        }
+        builder.show()
     }
 }
