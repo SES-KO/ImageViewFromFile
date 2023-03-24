@@ -188,6 +188,8 @@ In the beginning von `MainActivity.kt` we add two variables:
     var lastMsg = ""
 ```
 
+Using the Android buid-in download manager
+------------------------------------------
 This is the function to use the Android downloader to download the file:
 ```kotlin
     private fun downloadFile(downloadUri: Uri, dirType: String, subPathFile: File) {
@@ -280,6 +282,8 @@ Change the `Toast` in `enterDownloadUrl(view: View)` to calling the download fun
     }
 ```
 
+Add Ye/No dialog box
+---------------------
 Let's add a dialog box to ask for permission to download even of the local file exists.
 In the downloadWrapper function, add the following `else {...}` condition to `if (!localFile.exists()) {...}`:
 ```kotlin
