@@ -188,57 +188,43 @@ In the beginning von `MainActivity.kt` we add two variables:
     var lastMsg = ""
 ```
 
+This is the function to use the Android downloader to download the file:
 ```kotlin
-    private fun downloadFile(url: String) {
-        val dirType = Environment.DIRECTORY_PICTURES
-        val subPath = getString(R.string.app_name)
-
-        val directory = File(Environment.getExternalStoragePublicDirectory(dirType), subPath)
-        if (!directory.exists()) {
-            directory.mkdirs()
-        }
-
+    private fun downloadFile(downloadUri: Uri, dirType: String, subPathFile: File) {
         val downloadManager = this.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-
-        val downloadUri = Uri.parse(url)
-        val fileName = url.substring(url.lastIndexOf("/") + 1)
-        val localFile = File(directory, fileName)
-        val subPathFile = File(subPath, fileName)
-        if (!localFile.exists()) {
-            val request = DownloadManager.Request(downloadUri).apply {
-                setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-                    .setAllowedOverRoaming(false)
-                    .setTitle(subPathFile.toString())
-                    .setDescription("")
-                    .setDestinationInExternalPublicDir(
-                        dirType,
-                        subPathFile.toString()
-                    )
-            }
-
-            val downloadId = downloadManager.enqueue(request)
-            val query = DownloadManager.Query().setFilterById(downloadId)
-            Thread(Runnable {
-                var downloading = true
-                while (downloading) {
-                    val cursor: Cursor = downloadManager.query(query)
-                    cursor.moveToFirst()
-                    if (cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
-                        downloading = false
-                    }
-                    val status =
-                        cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
-                    msg = statusMessage(url, directory, status)
-                    if (msg != lastMsg) {
-                        this.runOnUiThread {
-                            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-                        }
-                        lastMsg = msg ?: ""
-                    }
-                    cursor.close()
-                }
-            }).start()
+        val request = DownloadManager.Request(downloadUri).apply {
+            setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+                .setAllowedOverRoaming(false)
+                .setTitle(subPathFile.toString())
+                .setDescription("")
+                .setDestinationInExternalPublicDir(
+                    dirType,
+                    subPathFile.toString()
+                )
         }
+
+        val downloadId = downloadManager.enqueue(request)
+        val query = DownloadManager.Query().setFilterById(downloadId)
+        Thread(Runnable {
+            var downloading = true
+            while (downloading) {
+                val cursor: Cursor = downloadManager.query(query)
+                cursor.moveToFirst()
+                if (cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
+                    downloading = false
+                }
+                val status =
+                    cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                msg = statusMessage(downloadUri.toString(), subPathFile, status)
+                if (msg != lastMsg) {
+                    this.runOnUiThread {
+                        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+                    }
+                    lastMsg = msg ?: ""
+                }
+                cursor.close()
+            }
+        }).start()
     }
 
     private fun statusMessage(url: String, directory: File, status: Int): String? {
@@ -257,6 +243,27 @@ In the beginning von `MainActivity.kt` we add two variables:
     }
 ```
 
+The download function is called from a downloadWrapper:
+```kotlin
+    private fun downloadWrapper(url: String) {
+        val dirType = Environment.DIRECTORY_PICTURES
+        val subPath = getString(R.string.app_name)
+
+        val directory = File(Environment.getExternalStoragePublicDirectory(dirType), subPath)
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+
+        val downloadUri = Uri.parse(url)
+        val fileName = url.substring(url.lastIndexOf("/") + 1)
+        val localFile = File(directory, fileName)
+        val subPathFile = File(subPath, fileName)
+        if (!localFile.exists()) {
+            downloadFile(downloadUri, dirType, subPathFile)
+        }
+    }
+```
+
 Change the `Toast` in `enterDownloadUrl(view: View)` to calling the download function:
 ```kotlin
     fun enterDownloadUrl(view: View) {
@@ -267,10 +274,36 @@ Change the `Toast` in `enterDownloadUrl(view: View)` to calling the download fun
         val downloadUrl  = dialogLayout.findViewById<EditText>(R.id.downloadUrl)
         builder.setView(dialogLayout)
         builder.setPositiveButton("Download") {
-                dialogInterface, i -> downloadFile(downloadUrl.text.toString())
+                dialogInterface, i -> downloadWrapper(downloadUrl.text.toString())
         }
         builder.show()
     }
+```
+
+Let's add a dialog box to ask for permission to download even of the local file exists.
+In the downloadWrapper function, add the following `else {...}` condition to `if (!localFile.exists()) {...}`:
+```kotlin
+        if (!localFile.exists()) {
+            downloadFile(downloadUri, dirType, subPathFile)
+        } else {
+            // open Dialog and ask to overwrite the file
+            val dialogClickListener: DialogInterface.OnClickListener =
+                DialogInterface.OnClickListener { dialog, which ->
+                    when (which) {
+                        DialogInterface.BUTTON_POSITIVE -> {
+                            downloadFile(downloadUri, dirType, subPathFile)
+                        }
+                        DialogInterface.BUTTON_NEGATIVE -> {
+                        }
+                    }
+                }
+
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage("File already exists. Do you want to download again?")
+                .setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show()
+            return
+        }
 ```
 
 This project is still WORK-IN-PROGRESS.
