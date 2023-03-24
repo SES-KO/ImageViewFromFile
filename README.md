@@ -26,13 +26,13 @@ Don't forget to create a string value resource for `my_image_caption`.
 
 Since the button does not exist anymore, we need to remove the corresponding code from `FirstFragment.kt`:
 ```kotlin
-    /*override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.buttonFirst.setOnClickListener {
+        /*binding.buttonFirst.setOnClickListener {
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
-        }
-    }*/
+        }*/
+    }
 ```
 
 Adding the dialog to enter URL of image file to download
