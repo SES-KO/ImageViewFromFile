@@ -9,20 +9,29 @@ Disabling second fragment
 =========================
 For our example we need only one fragment - so disable the "Next" button.
 
-In `fragment_first.xml` remove the section `<Button ...>`
-
-and change the whole section `<TextView ...>` to
+In `fragment_first.xml` update the sections `<Button ...>` and <TextView ...>` to
 ```xml
+        <Button
+            android:id="@+id/btnUpdateImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/update_image"
+            app:layout_constraintBottom_toTopOf="@id/imageView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+        />
+
         <ImageView
             android:id="@+id/imageView"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:contentDescription="@string/my_image_caption"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnUpdateImage" />
 ```
-
-Don't forget to create a string value resource for `my_image_caption`.
+Don't forget to create a string value resources for `update_image` and `my_image_caption`.
 
 Since the button does not exist anymore, we need to remove the corresponding code from `FirstFragment.kt`:
 ```kotlin
@@ -34,6 +43,21 @@ Since the button does not exist anymore, we need to remove the corresponding cod
         }*/
     }
 ```
+
+Let's give a resonable headline to our screen by renaming the `first_fragment_label` which occurs in `nav_graph.xml`:
+```kotlin
+    <fragment
+        android:id="@+id/FirstFragment"
+        android:name="com.sesko.imageviewfromfile.FirstFragment"
+        android:label="@string/first_fragment_label"
+        tools:layout="@layout/fragment_first">
+
+        <action
+            android:id="@+id/action_FirstFragment_to_SecondFragment"
+            app:destination="@id/SecondFragment" />
+    </fragment>
+```
+For this we need to edit `strings.xml` and choose the text "View downloaded image"
 
 Adding the dialog to enter URL of image file to download
 ========================================================
@@ -188,6 +212,14 @@ In the beginning von `MainActivity.kt` we add two variables:
     var lastMsg = ""
 ```
 
+and we add another companion object to store the filename with path of the downloaded image
+```kotlin
+    companion object {
+        private const val MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1
+        var localImageFile: File? = null
+    }
+```
+
 Using the Android build-in download manager
 ------------------------------------------
 This is the function to use the Android downloader to download the file:
@@ -232,14 +264,12 @@ This is the function to use the Android downloader to download the file:
     private fun statusMessage(url: String, directory: File, status: Int): String? {
         var msg = ""
         msg = when (status) {
-            DownloadManager.STATUS_FAILED -> "Download has been failed, please try again"
-            DownloadManager.STATUS_PAUSED -> "Paused"
-            DownloadManager.STATUS_PENDING -> "Pending"
-            DownloadManager.STATUS_RUNNING -> "Downloading..."
-            DownloadManager.STATUS_SUCCESSFUL -> "Image downloaded successfully in $directory" + File.separator + url.substring(
-                url.lastIndexOf("/") + 1
-            )
-            else -> "There's nothing to download"
+            DownloadManager.STATUS_FAILED -> "failed"
+            DownloadManager.STATUS_PAUSED -> "paused"
+            DownloadManager.STATUS_PENDING -> "pending"
+            DownloadManager.STATUS_RUNNING -> "downloading"
+            DownloadManager.STATUS_SUCCESSFUL -> "done"
+            else -> "error"
         }
         return msg
     }
@@ -248,6 +278,10 @@ This is the function to use the Android downloader to download the file:
 The download function is called from a downloadWrapper:
 ```kotlin
     private fun downloadWrapper(url: String) {
+        if (url == "") {
+            return
+        }
+
         val dirType = Environment.DIRECTORY_PICTURES
         val subPath = getString(R.string.app_name)
 
@@ -310,4 +344,39 @@ In the downloadWrapper function, add the following `else {...}` condition to `if
         }
 ```
 
-This project is still WORK-IN-PROGRESS.
+Displaying the image
+====================
+We want to display the image when the Update button is pressed.
+
+This works within the `FirstFagment.kt`.
+
+Add the function to display the image
+-------------------------------------
+```kotlin
+    private fun setupImageView() {
+        binding.btnUpdateImage.setOnClickListener {
+            if (localImageFile != null) {
+                println(">>> $localImageFile")
+                val bitmap = BitmapFactory.decodeFile(localImageFile!!.path)
+                binding.imageView.setImageBitmap(bitmap)
+            }
+        }
+    }
+```
+
+Bind the function call to the button
+------------------------------------
+There is already the function `onViewCreated` where we simply add the function call:
+```kotlin
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        /*binding.buttonFirst.setOnClickListener {
+            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+        }*/
+        
+        setupImageView()
+    }
+```
+
+That's it.
