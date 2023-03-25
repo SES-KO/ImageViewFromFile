@@ -20,7 +20,6 @@ In `fragment_first.xml` update the sections `<Button ...>` and `<TextView ...>` 
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        />
 
         <ImageView
             android:id="@+id/imageView"
