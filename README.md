@@ -9,7 +9,7 @@ Disabling second fragment
 =========================
 For our example we need only one fragment - so disable the "Next" button.
 
-In `fragment_first.xml` update the sections `<Button ...>` and <TextView ...>` to
+In `fragment_first.xml` update the sections `<Button ...>` and `<TextView ...>` to
 ```xml
         <Button
             android:id="@+id/btnUpdateImage"
@@ -20,7 +20,6 @@ In `fragment_first.xml` update the sections `<Button ...>` and <TextView ...>` t
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        />
 
         <ImageView
             android:id="@+id/imageView"
@@ -33,7 +32,7 @@ In `fragment_first.xml` update the sections `<Button ...>` and <TextView ...>` t
 ```
 Don't forget to create a string value resources for `update_image` and `my_image_caption`.
 
-Since the button does not exist anymore, we need to remove the corresponding code from `FirstFragment.kt`:
+Remove the original button action from `FirstFragment.kt`:
 ```kotlin
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -45,7 +44,7 @@ Since the button does not exist anymore, we need to remove the corresponding cod
 ```
 
 Let's give a resonable headline to our screen by renaming the `first_fragment_label` which occurs in `nav_graph.xml`:
-```kotlin
+```xml
     <fragment
         android:id="@+id/FirstFragment"
         android:name="com.sesko.imageviewfromfile.FirstFragment"
@@ -121,7 +120,7 @@ First we need to disable the existing action in `MainActivity.kt`:
 ```
 
 Link floating action button to the new added function directly in the `activity_main.xml`:
-```kotlin
+```xml
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
@@ -290,9 +289,9 @@ The download function is called from a downloadWrapper:
 
         val downloadUri = Uri.parse(url)
         val fileName = url.substring(url.lastIndexOf("/") + 1)
-        val localFile = File(directory, fileName)
+        localImageFile = File(directory, fileName)
         val subPathFile = File(subPath, fileName)
-        if (!localFile.exists()) {
+        if (!localImageFile.exists()) {
             downloadFile(downloadUri, dirType, subPathFile)
         }
     }
@@ -319,7 +318,7 @@ Add Yes/No dialog box
 Let's add a dialog box to ask for permission to download even of the local file exists.
 In the downloadWrapper function, add the following `else {...}` condition to `if (!localFile.exists()) {...}`:
 ```kotlin
-        if (!localFile.exists()) {
+        if (!localImageFile.exists()) {
             downloadFile(downloadUri, dirType, subPathFile)
         } else {
             // open Dialog and ask to overwrite the file
@@ -377,4 +376,4 @@ There is already the function `onViewCreated` where we simply add the function c
     }
 ```
 
-That's it.
+That's it. Feel free to download the complete code from this repository.
