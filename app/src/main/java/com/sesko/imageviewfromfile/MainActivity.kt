@@ -3,24 +3,30 @@ package com.sesko.imageviewfromfile
 import android.Manifest
 import android.annotation.TargetApi
 import android.app.AlertDialog
+import android.app.DownloadManager
+import android.content.Context
+import android.content.DialogInterface
 import android.content.pm.PackageManager
+import android.database.Cursor
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.WindowCompat
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
+import android.os.Environment
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.navigation.findNavController
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.navigateUp
+import androidx.navigation.ui.setupActionBarWithNavController
 import com.sesko.imageviewfromfile.databinding.ActivityMainBinding
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,7 +35,11 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1
+        var localImageFile: File? = null
     }
+
+    var msg: String? = ""
+    var lastMsg = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -121,8 +131,98 @@ class MainActivity : AppCompatActivity() {
         val downloadUrl  = dialogLayout.findViewById<EditText>(R.id.downloadUrl)
         builder.setView(dialogLayout)
         builder.setPositiveButton("Download") {
-                dialogInterface, i -> Toast.makeText(applicationContext, "Downloading " + downloadUrl.text.toString(), Toast.LENGTH_SHORT).show()
+                dialogInterface, i -> downloadWrapper(downloadUrl.text.toString())
         }
         builder.show()
+    }
+
+    private fun downloadWrapper(url: String) {
+        if (url == "") {
+            return
+        }
+
+        val dirType = Environment.DIRECTORY_PICTURES
+        val subPath = getString(R.string.app_name)
+
+        val directory = File(Environment.getExternalStoragePublicDirectory(dirType), subPath)
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+
+        val downloadUri = Uri.parse(url)
+        val fileName = url.substring(url.lastIndexOf("/") + 1)
+        localImageFile = File(directory, fileName)
+        val subPathFile = File(subPath, fileName)
+        if (!localImageFile!!.exists()) {
+            downloadFile(downloadUri, dirType, subPathFile)
+        } else {
+            // open Dialog and ask to overwrite the file
+            val dialogClickListener: DialogInterface.OnClickListener =
+                DialogInterface.OnClickListener { dialog, which ->
+                    when (which) {
+                        DialogInterface.BUTTON_POSITIVE -> {
+                            downloadFile(downloadUri, dirType, subPathFile)
+                        }
+                        DialogInterface.BUTTON_NEGATIVE -> {
+                        }
+                    }
+                }
+
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage("File already exists. Do you want to download again?")
+                .setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show()
+            return
+        }
+    }
+
+    private fun downloadFile(downloadUri: Uri, dirType: String, subPathFile: File) {
+        val downloadManager = this.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val request = DownloadManager.Request(downloadUri).apply {
+            setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+                .setAllowedOverRoaming(false)
+                .setTitle(subPathFile.toString())
+                .setDescription("")
+                .setDestinationInExternalPublicDir(
+                    dirType,
+                    subPathFile.toString()
+                )
+        }
+
+        val downloadId = downloadManager.enqueue(request)
+        val query = DownloadManager.Query().setFilterById(downloadId)
+        Thread(Runnable {
+            var downloading = true
+            while (downloading) {
+                val cursor: Cursor = downloadManager.query(query)
+                cursor.moveToFirst()
+                if (cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
+                    downloading = false
+                }
+                val status =
+                    cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                msg = statusMessage(downloadUri.toString(), subPathFile, status)
+                if (msg != lastMsg) {
+                    this.runOnUiThread {
+                        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+                    }
+                    lastMsg = msg ?: ""
+                }
+                cursor.close()
+            }
+        }).start()
+    }
+
+    private fun statusMessage(url: String, directory: File, status: Int): String? {
+        var msg = ""
+        msg = when (status) {
+            DownloadManager.STATUS_FAILED -> "failed"
+            DownloadManager.STATUS_PAUSED -> "paused"
+            DownloadManager.STATUS_PENDING -> "pending"
+            DownloadManager.STATUS_RUNNING -> "downloading"
+            DownloadManager.STATUS_SUCCESSFUL -> "done"
+            else -> "error"
+        }
+        return msg
     }
 }
