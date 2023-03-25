@@ -61,9 +61,8 @@ For this we need to edit `strings.xml` and choose the text "View downloaded imag
 
 Adding the dialog to enter URL of image file to download
 ========================================================
-
-Changing the icon
------------------
+Changing the icon of the floating button
+----------------------------------------
 At first we exchange the "mail" icon to a download icon from material design icons db.
 
 In the "Project" browser, right-click and choose "New->Vector Asset".
@@ -81,8 +80,8 @@ Change the icon name as follows in `res/layout/activity_main.xml`:
         app:srcCompat="@drawable/baseline_file_download_24" />
 ```
 
-Adding dialog
--------------
+Adding the dialog
+-----------------
 In the "Project" browser, right-click and choose "New->XML->Layout XML File" and name it "enter_download_url".
 
 In new created `enter_download_url.xml` add
@@ -110,8 +109,8 @@ Add the following function to `MainActivity.kt`:
     }
 ```
 
-Linking the dialog with the button
-----------------------------------
+Linking the dialog with the floating button
+-------------------------------------------
 First we need to disable the existing action in `MainActivity.kt`:
 ```kotlin
         /*binding.fab.setOnClickListener { view ->
@@ -137,7 +136,6 @@ Link floating action button to the new added function directly in the `activity_
 
 Adding the permissions to access the Internet and to write to the android file system
 =====================================================================================
-
 Add permissions to the Manifest
 -------------------------------
 Add the following lines to the `AndroidManifest.xml` after `<manifest .../>`:
@@ -364,8 +362,8 @@ Add the function to display the image
     }
 ```
 
-Bind the function call to the button
-------------------------------------
+Bind the function call to the update button
+-------------------------------------------
 There is already the function `onViewCreated` where we simply add the function call:
 ```kotlin
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
