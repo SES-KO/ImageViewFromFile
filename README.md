@@ -9,7 +9,7 @@ Disabling second fragment
 =========================
 For our example we need only one fragment - so disable the "Next" button.
 
-In `fragment_first.xml` update the sections `<Button ...>` and <TextView ...>` to
+In `fragment_first.xml` update the sections `<Button ...>` and `<TextView ...>` to
 ```xml
         <Button
             android:id="@+id/btnUpdateImage"
