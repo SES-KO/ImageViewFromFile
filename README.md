@@ -137,11 +137,13 @@ Adding the permissions to access the Internet and to write to the android file s
 =====================================================================================
 Add permissions to the Manifest
 -------------------------------
+We want to access the internet and write and read to the external storage of the Android device.
 Add the following lines to the `AndroidManifest.xml` after `<manifest .../>`:
 ```xml
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 ```
 
 Ask for permissions with older Android systems
